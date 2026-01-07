@@ -6,7 +6,16 @@ import React, { useState, useEffect, useRef } from 'react';
 const ANIMATION_DURATION = 2000; 
 
 const BIG_WALL_IMG = "/images/stone-slab.jpg?v=7"; 
+
+// ★変更: ここで画像を切り替えます
+// ---------------------------------------------------------
+// 元の画像（戻すときはこっちの // を外して、下の行に // をつける）
 const EMPTY_CHAMBER_IMG = "/images/empty-chamber.jpg?v=7";    
+
+// 新しい画像（テスト用）
+// const EMPTY_CHAMBER_IMG = "/images/empty-chamber-new.jpg?v=1";    
+// ---------------------------------------------------------
+
 const FALLBACK_TEXTURE = "https://www.transparenttextures.com/patterns/concrete-wall.png";
 // =================
 
@@ -40,24 +49,23 @@ const dummyImages = [
   '/images/glyph-hand.jpg?v=5',
 ];
 
-export default function MyWikipediaPrototypeV24() {
+export default function MyWikipediaPrototypeV26() {
   const [mode, setMode] = useState<'flip' | 'crumble'>('flip');
   const [gridItems, setGridItems] = useState<any[]>([]);
   
   // 画面分割数
   const [columns, setColumns] = useState(4); 
-  const [rows, setRows] = useState(12); // モバイルは縦12行で1画面に収める
+  const [rows, setRows] = useState(12);
 
   const [revealedIds, setRevealedIds] = useState<string[]>([]);
   
-  // グリッドコンテナの参照（画像のサイズ計算用）
+  // グリッドコンテナの参照
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   // 画面サイズ監視 & レイアウト計算
   useEffect(() => {
     const handleResize = () => {
-      // コンテナのサイズを取得
       if (containerRef.current) {
         setContainerSize({
           width: containerRef.current.clientWidth,
@@ -74,7 +82,7 @@ export default function MyWikipediaPrototypeV24() {
         setRows(8); // Tablet: 6x8 = 48
       } else {
         setColumns(4);
-        setRows(12); // Mobile: 4x12 = 48 (縦長)
+        setRows(12); // Mobile: 4x12 = 48
       }
     };
 
@@ -112,11 +120,6 @@ export default function MyWikipediaPrototypeV24() {
 
   // タッチ操作（なぞり発掘）
   const handleTouchMove = (e: React.TouchEvent) => {
-    // スクロールを禁止するため preventDefault (画面固定ならこれが必要)
-    // ただし、もしコンテンツがはみ出す場合はスクロールできなくなるので注意
-    // 今回は「1画面に収める」要望なのでOK
-    // e.preventDefault(); 
-    
     const touch = e.touches[0];
     const target = document.elementFromPoint(touch.clientX, touch.clientY);
     const slabElement = target?.closest('[data-slab-id]');
@@ -127,10 +130,9 @@ export default function MyWikipediaPrototypeV24() {
   };
 
   return (
-    // ★変更: h-screen と overflow-hidden でスクロールを禁止
     <div className="h-[100dvh] w-full font-sans relative flex items-center justify-center bg-[#2a2622] overflow-hidden">
       
-      {/* 背景（隙間から見えるベース） */}
+      {/* 背景 */}
       <div className="fixed inset-0 pointer-events-none opacity-50" style={{ backgroundImage: `url("${FALLBACK_TEXTURE}")`, backgroundSize: 'cover' }}></div>
       <div className="fixed inset-0 pointer-events-none bg-black/60"></div>
 
@@ -143,13 +145,12 @@ export default function MyWikipediaPrototypeV24() {
       </div>
 
       {/* グリッドコンテナ */}
-      {/* ★変更: h-full で画面いっぱいに広げる */}
       <div 
         ref={containerRef}
-        className="relative z-10 w-full h-full max-w-7xl mx-auto md:py-10"
+        className="relative z-10 w-full h-full"
       >
         <div 
-            className="grid h-full w-full gap-0 shadow-2xl touch-none" // touch-noneでブラウザ標準動作を無効化
+            className="grid h-full w-full gap-0 touch-none" 
             style={{ 
               gridTemplateColumns: `repeat(${columns}, 1fr)`,
               gridTemplateRows: `repeat(${rows}, 1fr)` 
@@ -161,24 +162,9 @@ export default function MyWikipediaPrototypeV24() {
           {gridItems.map((item) => {
             const isRevealed = revealedIds.includes(item.id);
             
-            // === 一枚絵に見せるための魔法の計算 (Cover Logic) ===
-            // 各石板が、背景画像の「どの部分」を切り取って表示すべきかを計算します。
-            
             const colIndex = item.index % columns;
             const rowIndex = Math.floor(item.index / columns);
 
-            // 1. まず、グリッド全体のアスペクト比を計算
-            const gridAspect = containerSize.width / containerSize.height || 1; 
-            // ※本来は画像の元サイズが必要ですが、ここでは「画像も正方形に近い」と仮定するか、
-            //   あるいは「常に画像を中央配置でCoverさせる」CSSテクニックを使います。
-
-            // シンプルかつ強力な方法: 
-            // 各セルに同じ画像を貼り、「background-size: columns*100% rows*100%」ではなく
-            // コンテナ全体に対する比率で指定する。
-            
-            // ここでは「画面サイズに合わせて引き伸ばす（100% 100%）」を採用します。
-            // ユーザーが「一枚の画像になっていない（ズレている）」と感じる一番の原因はタイリングだからです。
-            // 多少縦横比が変わっても、壁画全体が見えることを優先します。
             const bgSize = `${columns * 100}% ${rows * 100}%`;
             const bgPos = `${(colIndex / (columns - 1)) * 100}% ${(rowIndex / (rows - 1)) * 100}%`;
 
@@ -199,7 +185,6 @@ export default function MyWikipediaPrototypeV24() {
                      }}
                   >
                     <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
-                      {/* バナー画像は「cover」で枠いっぱいに表示 */}
                       <img src={item.banner} loading="lazy" className={`w-full h-full object-cover transition-opacity ease-in-out ${isRevealed ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDuration: `${ANIMATION_DURATION}ms` }} />
                     </div>
                     <StoneSlab item={item} isRevealed={isRevealed} mode={mode} bgPos={bgPos} bgSize={bgSize} />
@@ -232,7 +217,6 @@ export default function MyWikipediaPrototypeV24() {
   );
 }
 
-// 石板コンポーネント
 const StoneSlab = ({ item, isRevealed, mode, bgPos, bgSize }: any) => (
   <div 
     className={`
