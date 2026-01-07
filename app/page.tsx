@@ -38,11 +38,18 @@ const projects = [
     id: 'hand',
     name: 'Hand to Hand',
     glyph: '/images/glyph-hand.jpg?v=5',
-    banner: 'https://placehold.co/600x200/333333/FFF?text=Hand+to+Hand+GIF',
+    banner: 'images/banner-hand.gif?v=1',
     url: 'https://remriatv.github.io/HandtoHand/#story',
+  },
+  {
+    id: 'filter', 
+    name: 'iltershop.b.p.o', 
+    glyph: '/images/glyph-hand.jpg?v=5', 
+    banner: '/images/banner-filter.gif?v=2', 
+    // ▼ ここに ' を足しました
+    url: 'https://filter-shop-two.vercel.app/',
   }
 ];
-
 const dummyImages = [
   '/images/glyph-ghost.jpg?v=5',
   '/images/glyph-peach.jpg?v=5',
