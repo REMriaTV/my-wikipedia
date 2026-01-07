@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // === 設定項目 ===
 const ANIMATION_DURATION = 2000; 
@@ -16,7 +16,6 @@ const projects = [
     name: 'GHOST-CALENDAR',
     glyph: '/images/glyph-ghost.jpg?v=5',
     banner: '/images/banner_ghost.gif?v=8', 
-    // ★変更: 正しいリンク先を設定
     url: 'https://ghosttime-eta.vercel.app',
   },
   {
@@ -24,7 +23,6 @@ const projects = [
     name: 'TWIN PEACH',
     glyph: '/images/glyph-peach.jpg?v=5',
     banner: '/images/banner-peach.gif?v=5', 
-    // ★変更: 正しいリンク先を設定
     url: 'https://remriatv.github.io/twinpeach/index.html',
   },
   {
@@ -32,7 +30,6 @@ const projects = [
     name: 'Hand to Hand',
     glyph: '/images/glyph-hand.jpg?v=5',
     banner: 'https://placehold.co/600x200/333333/FFF?text=Hand+to+Hand+GIF',
-    // ★変更: 正しいリンク先を設定
     url: 'https://remriatv.github.io/HandtoHand/#story',
   }
 ];
@@ -43,19 +40,25 @@ const dummyImages = [
   '/images/glyph-hand.jpg?v=5',
 ];
 
-export default function MyWikipediaPrototypeV21() {
+export default function MyWikipediaPrototypeV22() {
   const [mode, setMode] = useState<'flip' | 'crumble'>('flip');
   const [gridItems, setGridItems] = useState<any[]>([]);
-  const [columns, setColumns] = useState(4);
+  const [columns, setColumns] = useState(4); // モバイルファースト（初期値4）
   
   const [revealedIds, setRevealedIds] = useState<string[]>([]);
 
+  // 画面サイズ監視（画像のズレ防止）
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) setColumns(8);
-      else if (window.innerWidth >= 768) setColumns(6);
-      else setColumns(4);
+      // Tailwindのブレークポイントと完全に一致させる
+      let newCols = 4;
+      if (window.innerWidth >= 1024) newCols = 8;      // lg
+      else if (window.innerWidth >= 768) newCols = 6;  // md
+      
+      setColumns(newCols);
     };
+
+    // 初回実行とリスナー登録
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -64,7 +67,7 @@ export default function MyWikipediaPrototypeV21() {
   useEffect(() => {
     const TOTAL_SLABS = 48; 
     let items = Array.from({ length: TOTAL_SLABS }).map((_, i) => ({
-      id: `dummy-${i}`,
+      id: `slab-${i}`, // IDをシンプルに
       index: i,
       type: 'dummy',
       glyph: dummyImages[Math.floor(Math.random() * dummyImages.length)],
@@ -77,7 +80,7 @@ export default function MyWikipediaPrototypeV21() {
       do {
         insertIdx = Math.floor(Math.random() * TOTAL_SLABS);
       } while (items[insertIdx].type !== 'dummy');
-      items[insertIdx] = { ...proj, index: insertIdx, type: 'real', rotation: '', opacity: 0.9 };
+      items[insertIdx] = { ...proj, id: `slab-${insertIdx}`, index: insertIdx, type: 'real', rotation: '', opacity: 0.9 };
     });
     setGridItems(items);
   }, []);
@@ -86,6 +89,23 @@ export default function MyWikipediaPrototypeV21() {
   const reveal = (id: string) => {
     if (!revealedIds.includes(id)) {
       setRevealedIds(prev => [...prev, id]);
+    }
+  };
+
+  // ★追加: スマホのなぞり操作（Touch Move）の処理
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // 画面スクロールを少し抑制（必要に応じて）
+    // e.preventDefault(); 
+
+    // 指の位置にある要素を取得
+    const touch = e.touches[0];
+    const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+    // その要素が石板（data-slab-idを持っている）か確認
+    const slabElement = target?.closest('[data-slab-id]');
+    if (slabElement) {
+      const id = slabElement.getAttribute('data-slab-id');
+      if (id) reveal(id);
     }
   };
 
@@ -102,7 +122,12 @@ export default function MyWikipediaPrototypeV21() {
       </div>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto md:my-10">
-        <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-0 shadow-2xl">
+        {/* ★変更: グリッド全体でタッチ操作を監視 */}
+        <div 
+            className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-0 shadow-2xl touch-none" // touch-noneでブラウザの戻る操作などを防ぐ
+            onTouchMove={handleTouchMove}
+            onTouchStart={handleTouchMove}
+        >
           
           {gridItems.map((item) => {
             const isRevealed = revealedIds.includes(item.id);
@@ -116,19 +141,24 @@ export default function MyWikipediaPrototypeV21() {
             return (
               <div 
                 key={item.id} 
+                // ★追加: タッチ判定用のIDを埋め込む
+                data-slab-id={item.id}
                 className="aspect-[4/3] relative perspective-2000 group"
                 style={{ cursor: !isRevealed ? 'pointer' : 'default', willChange: 'transform' }}
-                // PC用ホバー発掘
+                // PC用ホバー
                 onMouseEnter={() => reveal(item.id)}
-                // スマホ用クリック発掘
+                // スマホ用クリック（なぞらずにタップした場合）
                 onClick={() => reveal(item.id)}
               >
                 {item.type === 'real' ? (
                   // === 本物 ===
                   <a href={item.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full relative" 
                      onClick={(e) => { 
-                        // まだ開いていない時はリンク移動せず、開く動作だけ
-                        if (!isRevealed) { e.preventDefault(); reveal(item.id); } 
+                        // ★重要: まだ開いていない時はリンク移動を「完全に」無効化
+                        if (!isRevealed) { 
+                            e.preventDefault(); 
+                            reveal(item.id); 
+                        } 
                      }}
                   >
                     <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
