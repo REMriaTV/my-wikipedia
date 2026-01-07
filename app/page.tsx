@@ -3,60 +3,69 @@
 import React, { useState, useEffect } from 'react';
 
 // === 設定項目 ===
-// ★修正: 石板の動きはゆっくり（重く）に戻す
 const ANIMATION_DURATION = 2000; 
 
-// スマホ用: ダミーが開いた状態で留まる時間
-// ゆっくり開く(2000ms)ので、その後500msだけ見せてから閉じ始める
-const PEEK_TIME_MOBILE = 2500; 
-
-const STONE_TEXTURE_URL = "https://www.transparenttextures.com/patterns/concrete-wall.png";
-const STONE_COLOR = '#c2a676'; 
-const EMPTY_CHAMBER_COLOR = '#3e3b36'; // 埃っぽい土色
+const BIG_WALL_IMG = "/images/stone-slab.jpg?v=7"; 
+const EMPTY_CHAMBER_IMG = "/images/empty-chamber.jpg?v=7";    
+const FALLBACK_TEXTURE = "https://www.transparenttextures.com/patterns/concrete-wall.png";
 // =================
 
-// プロジェクトデータ
 const projects = [
   {
     id: 'ghost',
     name: 'GHOST-CALENDAR',
-    glyph: '/images/glyph-ghost.jpg?v=3',
-    banner: 'https://placehold.co/600x200/000000/FFF?text=GHOST+GIF',
-    url: 'https://ghost-calendar-dev.com',
+    glyph: '/images/glyph-ghost.jpg?v=5',
+    banner: '/images/banner_ghost.gif?v=8', 
+    // ★変更: 正しいリンク先を設定
+    url: 'https://ghosttime-eta.vercel.app',
   },
   {
     id: 'peach',
     name: 'TWIN PEACH',
-    glyph: '/images/glyph-peach.jpg?v=3',
-    banner: '/images/banner-peach.gif?v=3',
-    url: 'https://twin-peach-dev.com',
+    glyph: '/images/glyph-peach.jpg?v=5',
+    banner: '/images/banner-peach.gif?v=5', 
+    // ★変更: 正しいリンク先を設定
+    url: 'https://remriatv.github.io/twinpeach/index.html',
   },
   {
     id: 'hand',
     name: 'Hand to Hand',
-    glyph: '/images/glyph-hand.jpg?v=3',
+    glyph: '/images/glyph-hand.jpg?v=5',
     banner: 'https://placehold.co/600x200/333333/FFF?text=Hand+to+Hand+GIF',
-    url: 'https://hand-to-hand-dev.com',
+    // ★変更: 正しいリンク先を設定
+    url: 'https://remriatv.github.io/HandtoHand/#story',
   }
 ];
 
 const dummyImages = [
-  '/images/glyph-ghost.jpg?v=3',
-  '/images/glyph-peach.jpg?v=3',
-  '/images/glyph-hand.jpg?v=3',
+  '/images/glyph-ghost.jpg?v=5',
+  '/images/glyph-peach.jpg?v=5',
+  '/images/glyph-hand.jpg?v=5',
 ];
 
-export default function MyWikipediaPrototypeV11() {
+export default function MyWikipediaPrototypeV21() {
   const [mode, setMode] = useState<'flip' | 'crumble'>('flip');
   const [gridItems, setGridItems] = useState<any[]>([]);
+  const [columns, setColumns] = useState(4);
   
-  const [revealedRealIds, setRevealedRealIds] = useState<string[]>([]);
-  const [peekingDummyId, setPeekingDummyId] = useState<string | null>(null);
+  const [revealedIds, setRevealedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) setColumns(8);
+      else if (window.innerWidth >= 768) setColumns(6);
+      else setColumns(4);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const TOTAL_SLABS = 48; 
     let items = Array.from({ length: TOTAL_SLABS }).map((_, i) => ({
       id: `dummy-${i}`,
+      index: i,
       type: 'dummy',
       glyph: dummyImages[Math.floor(Math.random() * dummyImages.length)],
       rotation: Math.random() < 0.5 ? 'scale-x-[-1]' : '', 
@@ -68,47 +77,22 @@ export default function MyWikipediaPrototypeV11() {
       do {
         insertIdx = Math.floor(Math.random() * TOTAL_SLABS);
       } while (items[insertIdx].type !== 'dummy');
-      items[insertIdx] = { ...proj, type: 'real', rotation: '', opacity: 0.9 };
+      items[insertIdx] = { ...proj, index: insertIdx, type: 'real', rotation: '', opacity: 0.9 };
     });
     setGridItems(items);
   }, []);
 
-  // --- インタラクション処理 ---
-  
-  const handleEnter = (id: string, type: 'real' | 'dummy') => {
-    if (type === 'real') {
-      if (!revealedRealIds.includes(id)) {
-        setRevealedRealIds(prev => [...prev, id]);
-      }
-    } else {
-      // ダミーの場合
-      setPeekingDummyId(id);
-      
-      // スマホ用: 自動で閉じるタイマーをセット
-      // PCのホバー操作と干渉しないよう、少し長めの猶予を持たせています
-      setTimeout(() => {
-        setPeekingDummyId(current => current === id ? null : current);
-      }, PEEK_TIME_MOBILE);
-    }
-  };
-
-  const handleLeave = (type: 'real' | 'dummy') => {
-    if (type === 'dummy') {
-      // PC: カーソルが離れたら「即座に」閉じる指令を出す
-      // アニメーション速度自体はゆっくり（2秒）だが、開始は即時。
-      setPeekingDummyId(null);
+  // 開封処理
+  const reveal = (id: string) => {
+    if (!revealedIds.includes(id)) {
+      setRevealedIds(prev => [...prev, id]);
     }
   };
 
   return (
-    <div 
-      className="min-h-screen font-sans p-4 relative flex items-center justify-center overflow-hidden"
-      style={{
-        backgroundImage: `url("${STONE_TEXTURE_URL}")`,
-        backgroundColor: '#4a4036' 
-      }}
-    >
-      <div className="absolute inset-0 pointer-events-none mix-blend-multiply bg-[#5c4d3c] opacity-80"></div>
+    <div className="min-h-screen font-sans relative flex items-center justify-center overflow-hidden bg-[#2a2622]">
+      <div className="absolute inset-0 pointer-events-none opacity-50" style={{ backgroundImage: `url("${FALLBACK_TEXTURE}")`, backgroundSize: 'cover' }}></div>
+      <div className="absolute inset-0 pointer-events-none bg-black/60"></div>
 
       <div className="fixed top-4 right-4 z-50 bg-black/60 p-2 rounded-lg backdrop-blur-md border border-stone-600">
         <div className="flex gap-2">
@@ -117,69 +101,53 @@ export default function MyWikipediaPrototypeV11() {
         </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto">
-        <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-1 p-2 border-y-8 border-stone-800/30 bg-stone-900/20 shadow-inner">
+      <div className="relative z-10 w-full max-w-7xl mx-auto md:my-10">
+        <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-0 shadow-2xl">
           
           {gridItems.map((item) => {
-            const isRevealed = item.type === 'real' 
-              ? revealedRealIds.includes(item.id) 
-              : peekingDummyId === item.id;
+            const isRevealed = revealedIds.includes(item.id);
+            
+            const colIndex = item.index % columns;
+            const rowIndex = Math.floor(item.index / columns);
+            const totalRows = Math.ceil(48 / columns);
+            const bgSize = `${columns * 100}% ${totalRows * 100}%`;
+            const bgPos = `${(colIndex / (columns - 1)) * 100}% ${(rowIndex / (totalRows - 1)) * 100}%`;
 
             return (
               <div 
                 key={item.id} 
-                className="aspect-[4/3] relative perspective-2000"
-                
-                // PC: ホバー中だけ開く
-                onMouseEnter={() => handleEnter(item.id, item.type)}
-                onMouseLeave={() => handleLeave(item.type)}
-                
-                // スマホ: タップで開閉サイクル開始
-                onClick={() => handleEnter(item.id, item.type)}
-
-                style={{ cursor: isRevealed && item.type === 'real' ? 'default' : 'pointer' }}
+                className="aspect-[4/3] relative perspective-2000 group"
+                style={{ cursor: !isRevealed ? 'pointer' : 'default', willChange: 'transform' }}
+                // PC用ホバー発掘
+                onMouseEnter={() => reveal(item.id)}
+                // スマホ用クリック発掘
+                onClick={() => reveal(item.id)}
               >
-                
                 {item.type === 'real' ? (
                   // === 本物 ===
-                  <a 
-                    href={item.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="block w-full h-full relative"
-                    onClick={(e) => { 
-                        if (!isRevealed) { e.preventDefault(); } 
-                    }}
+                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full relative" 
+                     onClick={(e) => { 
+                        // まだ開いていない時はリンク移動せず、開く動作だけ
+                        if (!isRevealed) { e.preventDefault(); reveal(item.id); } 
+                     }}
                   >
-                    <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden border border-stone-700">
-                      <img 
-                        src={item.banner} 
-                        className={`w-full h-full object-cover transition-opacity ease-in-out ${isRevealed ? 'opacity-100' : 'opacity-0'}`}
-                        style={{ transitionDuration: `${ANIMATION_DURATION}ms` }}
-                      />
+                    <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
+                      <img src={item.banner} loading="lazy" className={`w-full h-full object-cover transition-opacity ease-in-out ${isRevealed ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDuration: `${ANIMATION_DURATION}ms` }} />
                     </div>
-                    <StoneSlab item={item} isRevealed={isRevealed} mode={mode} />
+                    <StoneSlab item={item} isRevealed={isRevealed} mode={mode} bgPos={bgPos} bgSize={bgSize} />
                   </a>
                 ) : (
                   // === ダミー ===
                   <div className="w-full h-full relative select-none">
-                     
-                     {/* 埃っぽい玄室（V10のデザインを維持） */}
-                     <div 
-                      className="absolute inset-0 w-full h-full border border-[#2a2622]"
-                      style={{
-                        backgroundImage: `url("${STONE_TEXTURE_URL}")`,
-                        backgroundColor: EMPTY_CHAMBER_COLOR,
-                        backgroundBlendMode: 'multiply',
-                      }}
-                     >
-                        <div className="absolute inset-0 w-full h-full shadow-[inset_0_0_50px_rgba(0,0,0,0.8)]"></div>
-                        <div className="absolute inset-0 w-full h-full opacity-30 mix-blend-overlay"
-                             style={{ backgroundImage: `url("${STONE_TEXTURE_URL}")`, filter: 'contrast(1.5)' }}>
-                        </div>
+                     <div className="absolute inset-0 w-full h-full" 
+                        style={{ 
+                            backgroundImage: `url("${EMPTY_CHAMBER_IMG}"), url("${FALLBACK_TEXTURE}")`, 
+                            backgroundColor: '#1a1815', 
+                            backgroundSize: bgSize, 
+                            backgroundPosition: bgPos,
+                        }}>
                      </div>
-
-                     <StoneSlab item={item} isRevealed={isRevealed} mode={mode} />
+                     <StoneSlab item={item} isRevealed={isRevealed} mode={mode} bgPos={bgPos} bgSize={bgSize} />
                   </div>
                 )}
               </div>
@@ -190,33 +158,46 @@ export default function MyWikipediaPrototypeV11() {
       <style jsx global>{`
         .perspective-2000 { perspective: 2000px; }
         .rotate-y-180 { transform: rotateY(180deg); }
-        .stone-shadow { box-shadow: 4px 4px 10px rgba(0,0,0,0.5), inset 1px 1px 2px rgba(255,255,255,0.2); }
+        .stone-shadow { box-shadow: none; }
       `}</style>
     </div>
   );
 }
 
-const StoneSlab = ({ item, isRevealed, mode }: any) => (
+// 石板コンポーネント
+const StoneSlab = ({ item, isRevealed, mode, bgPos, bgSize }: any) => (
   <div 
     className={`
-      absolute inset-0 w-full h-full flex items-center justify-center stone-shadow
-      border border-[#8c7b5b]/40
+      absolute inset-0 w-full h-full flex items-center justify-center
       transition-all ease-in-out
       ${mode === 'flip' && isRevealed ? 'rotate-y-180 opacity-0 pointer-events-none' : ''}
       ${mode === 'crumble' && isRevealed ? 'opacity-0 scale-110 blur-md pointer-events-none' : ''}
     `}
     style={{
-      backgroundImage: `url("${STONE_TEXTURE_URL}")`,
-      backgroundColor: STONE_COLOR,
-      backgroundBlendMode: 'overlay',
+      backgroundImage: `url("${BIG_WALL_IMG}"), url("${FALLBACK_TEXTURE}")`,
+      backgroundColor: '#b09b7c',
+      backgroundSize: bgSize,
+      backgroundPosition: bgPos,
       transitionDuration: `${ANIMATION_DURATION}ms`,
       backfaceVisibility: 'hidden',
-      transformStyle: 'preserve-3d'
+      transformStyle: 'preserve-3d',
+      border: 'none',
+      boxShadow: 'none',
+      willChange: 'transform, opacity'
     }}
   >
     <img 
       src={item.glyph} 
-      className={`w-[80%] h-[80%] object-contain mix-blend-multiply drop-shadow-[1px_1px_0px_rgba(255,255,255,0.3)] filter contrast-125 sepia brightness-90 ${item.type === 'dummy' ? 'opacity-60 grayscale-[0.3]' : 'opacity-80'} ${item.rotation}`}
+      loading="lazy"
+      className={`
+        w-[75%] h-[75%] object-contain 
+        ${item.type === 'dummy' ? 'opacity-60' : 'opacity-90'} 
+        ${item.rotation}
+      `}
+      style={{
+        mixBlendMode: 'multiply',
+        filter: 'contrast(1.2)'
+      }}
     />
   </div>
 );
