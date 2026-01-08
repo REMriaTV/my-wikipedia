@@ -1,3 +1,4 @@
+// File: app/page.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -7,19 +8,20 @@ const ANIMATION_DURATION = 2000;
 
 const BIG_WALL_IMG = "/images/stone-slab.jpg?v=7"; 
 
-// ★変更: ここで画像を切り替えます
+// ★変更: 画像切り替えテスト用
 // ---------------------------------------------------------
-// 元の画像（戻すときはこっちの // を外して、下の行に // をつける）
 const EMPTY_CHAMBER_IMG = "/images/empty-chamber.jpg?v=7";    
-
-// 新しい画像（テスト用）
 // const EMPTY_CHAMBER_IMG = "/images/empty-chamber-new.jpg?v=1";    
 // ---------------------------------------------------------
 
 const FALLBACK_TEXTURE = "https://www.transparenttextures.com/patterns/concrete-wall.png";
 // =================
 
+// プロジェクトデータ
+// ★修正: 未実装の画像（screenshot-*.jpgとしていた箇所）を
+// すべて "/images/banner-demo.jpg" に統一しました。
 const projects = [
+  // === 既存 & GIF/画像あり（変更なし） ===
   {
     id: 'ghost',
     name: 'GHOST-CALENDAR',
@@ -38,18 +40,137 @@ const projects = [
     id: 'hand',
     name: 'Hand to Hand',
     glyph: '/images/glyph-hand.jpg?v=5',
-    banner: 'images/banner-hand.gif?v=1',
+    banner: '/images/banner-hand.gif?v=1',
     url: 'https://remriatv.github.io/HandtoHand/#story',
   },
   {
     id: 'filter', 
-    name: 'iltershop.b.p.o', 
+    name: 'FILTER-SHOP b.p.o', 
     glyph: '/images/glyph-hand.jpg?v=5', 
     banner: '/images/banner-filter.gif?v=2', 
-    // ▼ ここに ' を足しました
     url: 'https://filter-shop-two.vercel.app/',
-  }
+  },
+  
+  // === 100mensoul系 ===
+  {
+    id: 'survive',
+    name: '播州サバイブ ~ 姫の路 ~',
+    glyph: '/images/glyph-ghost.jpg?v=5', // 仮
+    banner: '/images/banner-survive.gif', // 指定あり
+    url: 'https://100mensoul.github.io/banshu-survive/',
+  },
+  {
+    id: 'kamiharada',
+    name: 'SAVE 上原田',
+    glyph: '/images/glyph-peach.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://100mensoul.github.io/kami-harada/top/index.html',
+  },
+  {
+    id: 'truth',
+    name: '百面相の真実',
+    glyph: '/images/glyph-hand.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://100mensoul.github.io/truth/',
+  },
+  {
+    id: 'nevererror',
+    name: 'NEVER EVER ERROR',
+    glyph: '/images/glyph-ghost.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://100mensoul.github.io/truth/never-ever-error.html',
+  },
+  {
+    id: 'dayx',
+    name: 'DAY X',
+    glyph: '/images/glyph-peach.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://100mensoul.github.io/day-x/index.html',
+  },
+  {
+    id: 'dayx-idle',
+    name: 'DAY X | Idle Mode',
+    glyph: '/images/glyph-hand.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://100mensoul.github.io/day-x/idle9/index.html',
+  },
+  {
+    id: 'remriatv-wiki',
+    name: 'レムリアテレビと百面惣の世界',
+    glyph: '/images/glyph-ghost.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://100mensoul.github.io/truth/wiki-rem.html#ajiki',
+  },
+  {
+    id: 'appear',
+    name: 'Where Things Appear',
+    glyph: '/images/glyph-peach.jpg?v=5', // 仮
+    banner: '/images/banner-appear.jpg', // 指定あり
+    url: 'https://100mensoul.github.io/banshu-survive/r-photo/index.html?v=2',
+  },
+
+  // === k3housedesign系 ===
+  {
+    id: 'hole',
+    name: 'HOLE - 地下世界への入り口',
+    glyph: '/images/glyph-hand.jpg?v=5', // 仮
+    banner: '/images/banner-hole.gif', // 指定あり
+    url: 'https://k3housedesign.github.io/deploma/hole404.html',
+  },
+  {
+    id: 'k3house',
+    name: 'K3ハウス302号室',
+    glyph: '/images/glyph-ghost.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://k3design-house.vercel.app',
+  },
+  {
+    id: 'diplomacity',
+    name: 'DIPLOMACITY',
+    glyph: '/images/glyph-peach.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://k3housedesign.github.io/deploma/deploma.html',
+  },
+  {
+    id: 'zumic',
+    name: 'zumic',
+    glyph: '/images/glyph-hand.jpg?v=5', // 仮
+    banner: '/images/banner-zumic.gif', // 指定あり
+    url: 'https://k3housedesign.github.io/zumic/zumic.html',
+  },
+
+  // === REMriaTV系 (その他) ===
+  {
+    id: 'hand-paper',
+    name: 'Hand to Hand - 煙草紙',
+    glyph: '/images/glyph-ghost.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://remriatv.github.io/HandtoHand/manuscript/test-manuscript.html',
+  },
+  {
+    id: 'hand-note',
+    name: 'Hand to Hand - 制作note',
+    glyph: '/images/glyph-peach.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://remriatv.github.io/HandtoHand-work/',
+  },
+  {
+    id: 'zibun',
+    name: 'ZI-BUN - 自分学と地球学',
+    glyph: '/images/glyph-hand.jpg?v=5', // 仮
+    banner: '/images/banner-zi-bun.gif', // 指定あり
+    url: 'https://zi-bun.vercel.app',
+  },
+  {
+    id: 'ikimono',
+    name: '生きものむすぶ・みんなのミュージアム',
+    glyph: '/images/glyph-ghost.jpg?v=5', // 仮
+    banner: '/images/banner-demo.jpg', // ★ダミー画像
+    url: 'https://remriatv.github.io/iki-mono/',
+  },
 ];
+
+// ダミー画像（グリフ用）
 const dummyImages = [
   '/images/glyph-ghost.jpg?v=5',
   '/images/glyph-peach.jpg?v=5',
@@ -59,13 +180,13 @@ const dummyImages = [
 export default function MyWikipediaPrototypeV26() {
   const [mode, setMode] = useState<'flip' | 'crumble'>('flip');
   const [gridItems, setGridItems] = useState<any[]>([]);
-  
+   
   // 画面分割数
   const [columns, setColumns] = useState(4); 
   const [rows, setRows] = useState(12);
 
   const [revealedIds, setRevealedIds] = useState<string[]>([]);
-  
+   
   // グリッドコンテナの参照
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
@@ -114,7 +235,18 @@ export default function MyWikipediaPrototypeV26() {
       do {
         insertIdx = Math.floor(Math.random() * TOTAL_SLABS);
       } while (items[insertIdx].type !== 'dummy');
-      items[insertIdx] = { ...proj, id: `slab-${insertIdx}`, index: insertIdx, type: 'real', rotation: '', opacity: 0.9 };
+      // glyphがない場合はダミーからランダム割り当て（念のため）
+      const fallbackGlyph = dummyImages[Math.floor(Math.random() * dummyImages.length)];
+      
+      items[insertIdx] = { 
+        ...proj, 
+        glyph: proj.glyph || fallbackGlyph,
+        id: `slab-${insertIdx}`, 
+        index: insertIdx, 
+        type: 'real', 
+        rotation: '', 
+        opacity: 0.9 
+      };
     });
     setGridItems(items);
   }, []);
@@ -138,7 +270,7 @@ export default function MyWikipediaPrototypeV26() {
 
   return (
     <div className="h-[100dvh] w-full font-sans relative flex items-center justify-center bg-[#2a2622] overflow-hidden">
-      
+       
       {/* 背景 */}
       <div className="fixed inset-0 pointer-events-none opacity-50" style={{ backgroundImage: `url("${FALLBACK_TEXTURE}")`, backgroundSize: 'cover' }}></div>
       <div className="fixed inset-0 pointer-events-none bg-black/60"></div>
@@ -165,7 +297,7 @@ export default function MyWikipediaPrototypeV26() {
             onTouchMove={handleTouchMove}
             onTouchStart={handleTouchMove}
         >
-          
+           
           {gridItems.map((item) => {
             const isRevealed = revealedIds.includes(item.id);
             
@@ -187,9 +319,9 @@ export default function MyWikipediaPrototypeV26() {
                 {item.type === 'real' ? (
                   // === 本物 ===
                   <a href={item.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full relative" 
-                     onClick={(e) => { 
-                        if (!isRevealed) { e.preventDefault(); reveal(item.id); } 
-                     }}
+                      onClick={(e) => { 
+                         if (!isRevealed) { e.preventDefault(); reveal(item.id); } 
+                      }}
                   >
                     <div className="absolute inset-0 w-full h-full bg-black flex items-center justify-center overflow-hidden">
                       <img src={item.banner} loading="lazy" className={`w-full h-full object-cover transition-opacity ease-in-out ${isRevealed ? 'opacity-100' : 'opacity-0'}`} style={{ transitionDuration: `${ANIMATION_DURATION}ms` }} />
@@ -199,15 +331,15 @@ export default function MyWikipediaPrototypeV26() {
                 ) : (
                   // === ダミー ===
                   <div className="w-full h-full relative select-none">
-                     <div className="absolute inset-0 w-full h-full" 
+                      <div className="absolute inset-0 w-full h-full" 
                         style={{ 
                             backgroundImage: `url("${EMPTY_CHAMBER_IMG}"), url("${FALLBACK_TEXTURE}")`, 
                             backgroundColor: '#1a1815', 
                             backgroundSize: bgSize, 
                             backgroundPosition: bgPos,
                         }}>
-                     </div>
-                     <StoneSlab item={item} isRevealed={isRevealed} mode={mode} bgPos={bgPos} bgSize={bgSize} />
+                      </div>
+                      <StoneSlab item={item} isRevealed={isRevealed} mode={mode} bgPos={bgPos} bgSize={bgSize} />
                   </div>
                 )}
               </div>
